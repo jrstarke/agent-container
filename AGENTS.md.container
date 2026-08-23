@@ -24,7 +24,7 @@ If you're unsure whether a domain is allowed, just try it rather than assuming.
 
 If a task needs a domain that isn't covered, don't try to work around the firewall silently — surface it to the user and pick one of these, depending on urgency:
 
-- **Right now, this session (temporary)**: if the sandbox was launched with `--mount-docker-socket`, the Docker socket is mounted into this container and `appuser` is in the `docker` group, meaning a command exists to add a domain to the live `ipset` without a restart — no host round-trip needed. **Do not run this yourself.** It changes firewall state on a running system from inside the very container that firewall is meant to constrain, which is not a decision to make unilaterally. Instead, tell the user what domain you need and why, and give them the command to run themselves (filling in the container ID from `hostname` and the real domain):
+- **Right now, this session (temporary)**: **do not run this yourself.** Changing firewall state on a running system from inside the very container that firewall is meant to constrain is not a decision to make unilaterally — always tell the user what domain you need and why, and give them the command to run themselves. This holds *even if* the sandbox was launched with `--mount-docker-socket`, which mounts the Docker socket into the container and puts `appuser` in the `docker` group — making self-execution technically possible does not make it your call. Hand the user this command, filled in with the container ID from `hostname` and the real domain:
   ```bash
   CONTAINER_ID=$(hostname)
   DOMAIN="new-domain.com"
