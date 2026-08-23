@@ -24,7 +24,7 @@ If you're unsure whether a domain is allowed, just try it rather than assuming.
 
 If a task needs a domain that isn't covered, don't try to work around the firewall silently — surface it to the user and pick one of these, depending on urgency:
 
-- **Right now, this session (temporary)**: if the sandbox was launched with `--mount-docker-socket`, the Docker socket is mounted into this container and `appuser` is in the `docker` group, so you can add a domain to the live `ipset` yourself without a restart — no host round-trip needed. Get this container's own ID with `hostname`, then:
+- **Right now, this session (temporary)**: if the sandbox was launched with `--mount-docker-socket`, the Docker socket is mounted into this container and `appuser` is in the `docker` group, meaning a command exists to add a domain to the live `ipset` without a restart — no host round-trip needed. **Do not run this yourself.** It changes firewall state on a running system from inside the very container that firewall is meant to constrain, which is not a decision to make unilaterally. Instead, tell the user what domain you need and why, and give them the command to run themselves (filling in the container ID from `hostname` and the real domain):
   ```bash
   CONTAINER_ID=$(hostname)
   DOMAIN="new-domain.com"
@@ -34,7 +34,7 @@ If a task needs a domain that isn't covered, don't try to work around the firewa
     done
   "
   ```
-  This only lasts until the container restarts, and it changes firewall state on a running system — tell the user what domain you're adding and why before running it, don't do it silently. The Docker socket is **not** mounted by default — check `docker ps` (or `ls /var/run/docker.sock`) before assuming it's there; if it's missing, tell the user this route needs the sandbox restarted with `--mount-docker-socket`.
+  This only lasts until the container restarts. The Docker socket is **not** mounted by default — check `docker ps` (or `ls /var/run/docker.sock`) before assuming it's there; if it's missing, tell the user this route needs the sandbox restarted with `--mount-docker-socket`.
 - **Going forward (persistent)**: add the domain to `/workspace/allowed-domains`, one per line. This is the supported long-term fix and takes effect on the next container start — ask the user to confirm before you edit it, since it's a standing change to the project's network policy, not just this session.
 
 The container has asdf for version management. Install runtimes (node, python, etc.) with:
