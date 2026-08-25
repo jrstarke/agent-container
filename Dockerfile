@@ -6,7 +6,7 @@ ARG OPENCODE_VERSION=1.17.13
 ARG ASDF_VERSION=0.19.0
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  ca-certificates curl git iptables ipset dnsutils coreutils procps jq bash gosu docker-cli iproute2 libatomic1 openssh-client gh \
+  ca-certificates curl git iptables ipset dnsutils dnsmasq coreutils procps jq bash gosu docker-cli iproute2 libatomic1 openssh-client gh \
   && update-ca-certificates \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 

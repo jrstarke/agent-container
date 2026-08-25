@@ -162,6 +162,54 @@ if [ -n "$HOST_DOCKER_INTERNAL_IP" ]; then
     ipset add allowed-domains "$HOST_DOCKER_INTERNAL_IP" -exist
 fi
 
+echo "Capturing upstream DNS resolver for dnsmasq..."
+UPSTREAM_DNS=$(awk '/^nameserver/ {print $2; exit}' /etc/resolv.conf)
+if [ -z "$UPSTREAM_DNS" ]; then
+    echo "ERROR: Failed to detect upstream DNS resolver"
+    exit 1
+fi
+echo "Upstream DNS resolver: $UPSTREAM_DNS"
+
+# Resolving each allowed domain once above (via dig) only captures a
+# snapshot of its current IPs. Services behind CDNs rotate IPs over time,
+# which would silently break egress for them mid-session. dnsmasq is set up
+# here as the container's resolver so that every time an allowed domain is
+# actually queried, its freshly-resolved IPs get added to the same ipset --
+# keeping enforcement in sync with DNS reality for the life of the container,
+# without re-running this script.
+echo "Generating dnsmasq config..."
+mkdir -p /etc/dnsmasq.d
+{
+    echo "server=$UPSTREAM_DNS"
+    for domain in $DOMAINS; do
+        domain=$(echo "$domain" | tr -d '[:space:]')
+        [ -z "$domain" ] && continue
+        echo "ipset=/$domain/allowed-domains"
+    done
+} > /etc/dnsmasq.d/allowed-domains.conf
+
+DNSMASQ_ARGS=(--conf-file=/etc/dnsmasq.d/allowed-domains.conf --listen-address=127.0.0.1 --bind-interfaces --pid-file=/run/dnsmasq-allowed-domains.pid)
+
+echo "Starting dnsmasq..."
+mkdir -p /run
+dnsmasq "${DNSMASQ_ARGS[@]}"
+if ! pgrep -x dnsmasq >/dev/null; then
+    echo "ERROR: dnsmasq failed to start"
+    exit 1
+fi
+
+echo "Starting dnsmasq watchdog..."
+(
+    while true; do
+        sleep 30
+        pgrep -x dnsmasq >/dev/null || dnsmasq "${DNSMASQ_ARGS[@]}" || true
+    done
+) &
+disown
+
+echo "Pointing resolv.conf at dnsmasq..."
+echo "nameserver 127.0.0.1" > /etc/resolv.conf
+
 iptables -P INPUT DROP
 iptables -P FORWARD DROP
 iptables -P OUTPUT DROP
