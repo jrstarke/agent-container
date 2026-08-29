@@ -170,6 +170,8 @@ COPY allow-domain.sh /usr/local/bin/allow-domain
 COPY AGENTS.md.container /home/appuser/.config/opencode/AGENTS.md
 COPY AGENTS.md.container /opt/sandbox-seed/CLAUDE.md
 COPY opencode.json.container /home/appuser/.config/opencode/opencode.json
+RUN mkdir -p /opt/agent-container
+COPY container-contract.json /opt/agent-container/container-contract.json
 RUN chmod 755 /usr/local/bin/init-firewall.sh /usr/local/bin/entrypoint.sh /usr/local/bin/claude-statusline /usr/local/bin/allow-domain
 RUN chown appuser:appuser /opt/sandbox-seed/CLAUDE.md
 
