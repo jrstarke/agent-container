@@ -6,7 +6,7 @@ ARG OPENCODE_VERSION=1.17.13
 ARG ASDF_VERSION=0.19.0
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  ca-certificates curl git iptables ipset dnsutils dnsmasq coreutils procps jq bash gosu docker-cli iproute2 libatomic1 openssh-client gh \
+  ca-certificates curl git iptables ipset dnsutils dnsmasq coreutils procps jq bash gosu docker-cli iproute2 libatomic1 openssh-client gh zsh \
   && update-ca-certificates \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -38,7 +38,7 @@ RUN ARCH=$(echo "$TARGETARCH" | sed 's/amd64/x64/;s/arm64/arm64/') && \
 # Install qemu for non-native binaries
 RUN apt-get update && apt-get install -y --no-install-recommends qemu-user-static && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /home/appuser && useradd -m -s /bin/bash appuser || true
+RUN mkdir -p /home/appuser && useradd -m -s /usr/bin/zsh appuser || true
 RUN chown -R appuser:appuser /home/appuser
 RUN groupadd -g 991 docker || true
 RUN usermod -aG docker appuser || true
