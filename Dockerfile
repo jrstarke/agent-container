@@ -138,6 +138,13 @@ ENV PATH=/home/appuser/.local/bin:/home/appuser/.asdf/shims:$PATH
 # so the binary installed at build time stays immutable at runtime.
 ENV DISABLE_UPDATES=1
 
+# /home/appuser/.config used to be created implicitly (root:root) by the
+# COPY .../opencode/... lines below, since Docker auto-creates missing COPY
+# parent directories as root regardless of any earlier USER/gosu usage.
+# Create and chown it explicitly first, the same way .gemini and .claude
+# already are above.
+RUN mkdir -p /home/appuser/.config && chown appuser:appuser /home/appuser/.config
+
 COPY init-firewall.sh /usr/local/bin/init-firewall.sh
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY AGENTS.md.container /home/appuser/.config/opencode/AGENTS.md
