@@ -72,6 +72,14 @@ case "$1" in
     shift
     exec gosu appuser claude --dangerously-skip-permissions "$@"
     ;;
+  idle)
+    # Runs firewall init and every other setup step above, then parks
+    # instead of starting an agent — for launchers (e.g. collie's
+    # session-pod-launcher) that create a container ahead of time and start
+    # the actual agent command later via a separate exec into the already-
+    # running container, rather than at container-start time.
+    exec sleep infinity
+    ;;
   *)
     # Default to opencode when no known tool is specified
     exec gosu appuser opencode "$@"
