@@ -81,7 +81,7 @@ case "$1" in
     exec sleep infinity
     ;;
   *)
-    # Default to opencode when no known tool is specified
-    exec gosu appuser opencode "$@"
+    # Default to claude when no known tool is specified
+    exec gosu appuser claude --dangerously-skip-permissions "$@"
     ;;
 esac
