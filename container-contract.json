@@ -1,0 +1,28 @@
+{
+  "description": "Launch contract for the agent-container image: what any launcher (docker CLI, Kubernetes, etc.) must or may supply for the image to function correctly. run.sh (this repo, local dev) and any external launcher (e.g. collie's Kubernetes Pod-builder) are reviewed against this list rather than each hand-copying it independently.",
+  "env": {
+    "required": [],
+    "optional": [
+      { "name": "GIT_USER_NAME", "purpose": "git config --global user.name, set by entrypoint.sh if present" },
+      { "name": "GIT_USER_EMAIL", "purpose": "git config --global user.email, set by entrypoint.sh if present" },
+      { "name": "TENSORZERO_BASE_URL", "purpose": "substituted into ~/.config/opencode/opencode.json's baseURL by entrypoint.sh if present" },
+      { "name": "SKIP_FIREWALL", "purpose": "set to 'true' to skip init-firewall.sh at container start, e.g. when the launcher already enforces egress policy itself (a Kubernetes NetworkPolicy)" },
+      { "name": "HOST_WORKSPACE", "purpose": "informational, defaults to /workspace via the image's own ENV; override only if the launcher mounts /workspace from a host-relative path tools should report" }
+    ]
+  },
+  "mounts": {
+    "required": [
+      { "path": "/workspace", "readOnly": false, "purpose": "the project directory agent tools operate on" }
+    ],
+    "optional": [
+      { "path": "/home/appuser/.claude", "readOnly": false, "purpose": "persists Claude Code OAuth credentials (~/.claude/.credentials.json) across restarts; without it every run needs a fresh browser login" },
+      { "path": "/commandhistory", "readOnly": false, "purpose": "persists shell history across restarts" },
+      { "path": "/var/run/docker.sock", "readOnly": false, "purpose": "grants Docker access inside the container (run.sh's --mount-docker-socket); not required for normal operation and widens the container's effective privileges to node/host-root-equivalent -- grant deliberately, never by default" }
+    ]
+  },
+  "capabilities": {
+    "required": ["NET_ADMIN", "NET_RAW"],
+    "purpose": "init-firewall.sh (run at container start unless SKIP_FIREWALL=true) configures iptables/ipset egress rules; without these capabilities it fails to apply them"
+  },
+  "entrypoint_commands": ["opencode", "agy", "claude", "(no argument defaults to opencode)"]
+}
