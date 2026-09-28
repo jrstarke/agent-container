@@ -6,12 +6,15 @@ ARG OPENCODE_VERSION=1.17.13
 ARG ASDF_VERSION=0.19.0
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  ca-certificates curl git iptables ipset dnsutils coreutils procps jq bash gosu docker-cli iproute2 libatomic1 golang-go openssh-client gh \
+  ca-certificates curl git iptables ipset dnsutils coreutils procps jq bash gosu docker-cli iproute2 libatomic1 openssh-client gh \
   && update-ca-certificates \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Build dependencies for asdf's python plugin (pyenv/python-build compiles
-# CPython from source; there's no prebuilt-binary path like nodejs has).
+# CPython from source; there's no prebuilt-binary path like nodejs/golang
+# have). Kept in the final image, not just a build stage: agents install
+# python on demand at runtime via asdf (see AGENTS.md.container), and that
+# needs a compiler present then, not just during this build.
 RUN apt-get update && apt-get install -y --no-install-recommends \
   build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev \
   libsqlite3-dev libncursesw5-dev xz-utils tk-dev libxml2-dev \
@@ -58,21 +61,23 @@ RUN mkdir -p /home/appuser/.asdf/shims && chown -R appuser:appuser /home/appuser
 RUN mkdir -p /home/appuser/.gemini/config && chown -R appuser:appuser /home/appuser/.gemini
 RUN mkdir -p /home/appuser/.claude/config && chown -R appuser:appuser /home/appuser/.claude
 
-# Pre-install node (latest LTS) and python (latest stable 3.x) via asdf, and
-# pin them as appuser's global default via `asdf set --home` (writes
-# ~/.tool-versions). Versions resolved at the time this was written:
-#   node   -> `asdf latest nodejs lts`
-#   python -> newest non-experimental 3.x from `asdf list all python`
+# Pre-install node via asdf and pin it as appuser's global default via
+# `asdf set --home` (writes ~/.tool-versions). This is a real build-time
+# dependency, not just agent convenience: the Superpowers plugin install
+# below runs through it. Version resolved at the time this was written via
+# `asdf latest nodejs lts`.
+#
+# python and go are NOT pre-installed here -- only the system dependencies
+# they need are (build-essential/headers above for python's from-source
+# compile; go needs nothing extra, asdf downloads its prebuilt release).
+# Agents install either on demand via asdf at runtime; see
+# AGENTS.md.container.
 ARG NODE_VERSION=24.18.0
-ARG PYTHON_VERSION=3.14.6
 RUN gosu appuser bash -lc "\
   export PATH=/usr/local/bin:\$PATH && \
   asdf plugin add nodejs && \
-  asdf plugin add python && \
   asdf install nodejs ${NODE_VERSION} && \
-  asdf install python ${PYTHON_VERSION} && \
-  asdf set --home nodejs ${NODE_VERSION} && \
-  asdf set --home python ${PYTHON_VERSION} \
+  asdf set --home nodejs ${NODE_VERSION} \
 "
 
 # Seed directory for ~/.claude state that must always reflect the image,
