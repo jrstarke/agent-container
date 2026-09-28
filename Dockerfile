@@ -75,20 +75,6 @@ RUN gosu appuser bash -lc "\
   asdf set --home python ${PYTHON_VERSION} \
 "
 
-# Install OpenWolf (context-management middleware for coding agents,
-# https://github.com/cytostack/openwolf) globally into appuser's asdf-managed
-# node, so `openwolf` is on PATH via the asdf shims already on PATH (below).
-#
-# Pinned, and deliberately NOT on `latest`: earlier 2.x releases (2.0.1) had
-# bugs we hit in practice, so this held at the last 1.x release until 2.4.1,
-# which is known good. Bare `npm install -g openwolf` would silently move
-# this on every rebuild.
-ARG OPENWOLF_VERSION=2.4.1
-RUN gosu appuser bash -lc "\
-  export PATH=/home/appuser/.asdf/shims:\$PATH && \
-  npm install -g openwolf@${OPENWOLF_VERSION} \
-"
-
 # Seed directory for ~/.claude state that must always reflect the image,
 # not whatever a previous container run's named volume happened to capture.
 # ~/.claude itself is a named volume (see run.sh) so it survives across
