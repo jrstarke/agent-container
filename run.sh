@@ -57,6 +57,24 @@ echo "Workspace: $WORKSPACE_DIR"
 antigravity_auth_dir="${HOME}/.gemini/antigravity-cli"
 mkdir -p "$antigravity_auth_dir"
 
+# One port per run for whatever an agent wants to serve (dev server, preview,
+# OAuth callback). Picked at random from the IANA ephemeral range so concurrent
+# sandboxes don't collide, skipping anything already listening on the host
+# (bash's /dev/tcp, so no lsof/ss dependency across macOS and Linux). Mapped to
+# the same number inside the container so the URL an agent prints also works
+# from the host. Set PUBLISH_PORT on the host to pin it instead.
+pick_publish_port() {
+  local port
+  for _ in $(seq 50); do
+    port=$((49152 + RANDOM % 16384))
+    (exec 3<>"/dev/tcp/127.0.0.1/$port") 2>/dev/null || { echo "$port"; return 0; }
+  done
+  echo "Could not find a free port in 49152-65535" >&2
+  return 1
+}
+PUBLISH_PORT="${PUBLISH_PORT:-$(pick_publish_port)}"
+echo "Published port: http://localhost:$PUBLISH_PORT (PUBLISH_PORT in the container)"
+
 DOCKER_SOCKET_ARGS=()
 if [ "$MOUNT_DOCKER_SOCKET" = "true" ]; then
   echo "Mounting host Docker socket into the sandbox (--mount-docker-socket)"
@@ -67,6 +85,7 @@ docker run -it --rm \
   --cap-add=NET_ADMIN \
   --cap-add=NET_RAW \
   --add-host=host.docker.internal:host-gateway \
+  -p "127.0.0.1:$PUBLISH_PORT:$PUBLISH_PORT" \
   -v "$WORKSPACE_DIR":/workspace \
   -v agent-container-history:/commandhistory \
   -v agent-container-claude-config:/home/appuser/.claude \
@@ -78,6 +97,7 @@ docker run -it --rm \
   -e GIT_USER_NAME="$GIT_USER_NAME" \
   -e GIT_USER_EMAIL="$GIT_USER_EMAIL" \
   -e TENSORZERO_BASE_URL="${TENSORZERO_BASE_URL:-}" \
+  -e PUBLISH_PORT="$PUBLISH_PORT" \
   -w /workspace \
   agent-container \
   "$@"

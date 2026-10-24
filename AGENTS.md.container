@@ -7,6 +7,7 @@ You are running inside an isolated Docker container with restricted network acce
 - **Network**: Outbound connections are dropped by default. Only explicitly allowlisted domains/IP ranges are reachable — everything else fails fast (connection refused/rejected), by design.
 - **Filesystem**: Only `/workspace` is mounted from the host. Other host directories are not visible here.
 - **Privileges**: Running as `appuser` in usermode. No sudo.
+- **Published port**: exactly one port is reachable from the host, given in `$PUBLISH_PORT` (a random port in 49152–65535, different on every run). To serve something the user can open — a dev server, preview, OAuth callback — listen on `0.0.0.0:$PUBLISH_PORT`, not `127.0.0.1` (loopback inside the container isn't reachable through Docker's port forwarding), and tell the user the URL `http://localhost:$PUBLISH_PORT`. No other port is published.
 
 ## Allowed Domains
 
