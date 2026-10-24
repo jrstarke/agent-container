@@ -18,12 +18,36 @@ set -- "${ARGS[@]}"
 GIT_USER_NAME=$(git config --global user.name 2>/dev/null || echo "")
 GIT_USER_EMAIL=$(git config --global user.email 2>/dev/null || echo "")
 
-echo "=== Building opencode container ==="
-docker build -t opencode-sandbox "$SCRIPT_DIR"
+echo "=== Building agent container ==="
+docker build -t agent-container "$SCRIPT_DIR"
 
-echo "=== Running opencode sandbox ==="
+# The image and its volumes used to be named opencode-sandbox*. Docker can't
+# rename a volume, so on the first run after the rename, copy each old volume
+# into its new name; otherwise the Claude login and shell history would be
+# silently lost. Runs only while the new volume doesn't exist yet. The old
+# volume is left in place — remove it by hand once the new one is confirmed
+# working. If the copy fails, the half-filled new volume is removed so the
+# next run retries instead of skipping.
+migrate_volume() {
+  local old="$1" new="$2"
+  docker volume inspect "$new" >/dev/null 2>&1 && return 0
+  docker volume inspect "$old" >/dev/null 2>&1 || return 0
+  echo "Migrating Docker volume $old -> $new"
+  docker volume create "$new" >/dev/null
+  if ! docker run --rm --user root --entrypoint cp \
+      -v "$old":/from:ro -v "$new":/to \
+      agent-container -a /from/. /to/; then
+    docker volume rm "$new" >/dev/null 2>&1 || true
+    echo "Failed to migrate $old -> $new; leaving $old untouched" >&2
+    exit 1
+  fi
+}
+migrate_volume opencode-sandbox-history agent-container-history
+migrate_volume opencode-sandbox-claude-config agent-container-claude-config
+
+echo "=== Running agent container ==="
 echo "Workspace: $WORKSPACE_DIR"
-# opencode-sandbox-claude-config holds the whole ~/.claude dir, but only the
+# agent-container-claude-config holds the whole ~/.claude dir, but only the
 # OAuth credentials in it are actually meant to survive across runs.
 # entrypoint.sh re-seeds CLAUDE.md/settings.json/plugins from the image and
 # wipes projects/ (memory + session history, which would otherwise bleed
@@ -44,8 +68,8 @@ docker run -it --rm \
   --cap-add=NET_RAW \
   --add-host=host.docker.internal:host-gateway \
   -v "$WORKSPACE_DIR":/workspace \
-  -v opencode-sandbox-history:/commandhistory \
-  -v opencode-sandbox-claude-config:/home/appuser/.claude \
+  -v agent-container-history:/commandhistory \
+  -v agent-container-claude-config:/home/appuser/.claude \
   "${DOCKER_SOCKET_ARGS[@]}" \
   -v "$antigravity_auth_dir":/home/appuser/.gemini/antigravity-cli \
   -e NODE_OPTIONS="--max-old-space-size=4096" \
@@ -55,5 +79,5 @@ docker run -it --rm \
   -e GIT_USER_EMAIL="$GIT_USER_EMAIL" \
   -e TENSORZERO_BASE_URL="${TENSORZERO_BASE_URL:-}" \
   -w /workspace \
-  opencode-sandbox \
+  agent-container \
   "$@"

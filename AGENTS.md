@@ -18,6 +18,7 @@
 
 ## Miscellaneous
 - **test_models_dev_check.sh** – Simple Bash test that verifies the presence of `models.dev` in the default domain list.
+- **test_agent_container_name_check.sh** – Static check that `run.sh` uses the `agent-container` image/volume names and migrates the old `opencode-sandbox-*` volumes.
 - **test/** – Container smoke tests (e.g. verifying the `claude` binary works).
 - **AGENTS.md** – This high-level description of the workspace layout.
 
