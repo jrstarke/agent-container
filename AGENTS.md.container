@@ -45,7 +45,7 @@ asdf install node latest
 asdf global node latest
 ```
 
-Playwright's system dependencies for headless Chromium are pre-installed (no root needed to use it), but the browser itself is not. Install it with `npx playwright install chromium`; that download comes from `cdn.playwright.dev` / `playwright.download.prss.microsoft.com`, so if it's blocked, surface it as a missing domain per the section above.
+Playwright's system dependencies for headless Chromium are pre-installed (no root needed to use it), but the browser itself is not. Install it with `npx playwright install chromium`; that download comes from `cdn.playwright.dev` / `playwright.download.prss.microsoft.com`, which this repo's `allowed-domains` includes. In another project, if it's blocked, surface it as a missing domain per the section above.
 
 Superpowers is installed for structured software development workflows.
 
