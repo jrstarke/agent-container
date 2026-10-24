@@ -19,6 +19,7 @@
 ## Miscellaneous
 - **test_models_dev_check.sh** – Simple Bash test that verifies the presence of `models.dev` in the default domain list.
 - **test_agent_container_name_check.sh** – Static check that `run.sh` uses the `agent-container` image/volume names and migrates the old `opencode-sandbox-*` volumes.
+- **test_playwright_deps_check.sh** – Static check that the Dockerfile installs Playwright's pinned Chromium system deps after Node and cleans apt/npm caches.
 - **test/** – Container smoke tests (e.g. verifying the `claude` binary works).
 - **AGENTS.md** – This high-level description of the workspace layout.
 

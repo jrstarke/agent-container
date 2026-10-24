@@ -80,6 +80,17 @@ RUN gosu appuser bash -lc "\
   asdf set --home nodejs ${NODE_VERSION} \
 "
 
+# System libraries headless Chromium needs, so agents can run Playwright
+# without root. Only the apt deps are baked in, not the browser itself:
+# `npx playwright install chromium` at runtime still downloads it. Runs as
+# root (install-deps shells out to apt-get) using appuser's asdf node directly,
+# since root has no asdf shims. Pinned because the dependency list is
+# per-Playwright-version; 1.64.1 has a native debian13 (trixie) list.
+ARG PLAYWRIGHT_VERSION=1.64.1
+RUN PATH=/home/appuser/.asdf/installs/nodejs/${NODE_VERSION}/bin:$PATH \
+    npx -y playwright@${PLAYWRIGHT_VERSION} install-deps chromium && \
+  apt-get clean && rm -rf /var/lib/apt/lists/* /root/.npm
+
 # Seed directory for ~/.claude state that must always reflect the image,
 # not whatever a previous container run's named volume happened to capture.
 # ~/.claude itself is a named volume (see run.sh) so it survives across
