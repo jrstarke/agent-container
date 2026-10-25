@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Claude Code status line: model, context window use, plan rate limits, cost.
-#   Opus 5.5 high · ctx 84k/200k 42% · 5h 23% ↻14:05 · 7d 61% · $1.23
+#   Opus 5.5 high · ctx 84k/200k 42% · 5h 23% ↻14:05 · 7d 61% ↻Thu 10:00 · $1.23
 # Reads the status line JSON Claude Code sends on stdin. Percentages turn
 # yellow at 50% and red at 80%. rate_limits only exists on a Claude
 # subscription once the limits are known, so those segments are simply
@@ -34,15 +34,16 @@ human() {
   fi
 }
 
-# resets_at as local HH:MM; accepts epoch seconds, epoch ms or an ISO string.
+# resets_at in local time using date format $2; accepts epoch seconds, epoch ms
+# or an ISO string.
 reset_time() {
-  local r=$1 secs
+  local r=$1 fmt=$2 secs
   if [[ $r =~ ^[0-9]+$ ]]; then
     secs=$r
     [ "$secs" -gt 100000000000 ] && secs=$(( secs / 1000 ))
-    date -d "@$secs" +%H:%M 2>/dev/null
+    date -d "@$secs" "+$fmt" 2>/dev/null
   else
-    date -d "$r" +%H:%M 2>/dev/null
+    date -d "$r" "+$fmt" 2>/dev/null
   fi
 }
 
@@ -65,8 +66,12 @@ for win in five_hour:5h seven_day:7d; do
   [ -z "$p" ] && continue
   seg="$label $(pct "$p")"
   r=$(j ".rate_limits.$key.resets_at")
-  if [ "$key" = five_hour ] && [ -n "$r" ]; then
-    t=$(reset_time "$r")
+  # The 5h window resets within the day, so the time is enough; the 7d one
+  # needs the weekday too.
+  fmt=%H:%M
+  [ "$key" = seven_day ] && fmt="%a %H:%M"
+  if [ -n "$r" ]; then
+    t=$(reset_time "$r" "$fmt")
     [ -n "$t" ] && seg+=" ${DIM}↻${t}${RESET}"
   fi
   parts+=("$seg")

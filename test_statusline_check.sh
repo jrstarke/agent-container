@@ -19,7 +19,7 @@ got=$(TZ=UTC render <<'JSON'
  "cost":{"total_cost_usd":1.234}}
 JSON
 )
-expect "full payload" "Opus 5.5 high · ctx 84k/200k 42% · 5h 23% ↻14:05 · 7d 81% · \$1.23" "$got"
+expect "full payload" "Opus 5.5 high · ctx 84k/200k 42% · 5h 23% ↻14:05 · 7d 81% ↻$(TZ=UTC date -d @1793000000 '+%a %H:%M') · \$1.23" "$got"
 
 got=$(render <<<'{"model":{"display_name":"Sonnet 5"},"context_window":{"context_window_size":1000000,"total_input_tokens":512,"used_percentage":0}}')
 expect "no rate limits, 1M window" "Sonnet 5 · ctx 512/1M 0%" "$got"
