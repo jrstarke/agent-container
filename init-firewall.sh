@@ -190,10 +190,17 @@ mkdir -p /etc/dnsmasq.d
 
 DNSMASQ_ARGS=(--conf-file=/etc/dnsmasq.d/allowed-domains.conf --listen-address=127.0.0.1 --bind-interfaces --pid-file=/run/dnsmasq-allowed-domains.pid)
 
+# Zombie-aware liveness check. dnsmasq daemonizes, so its parent becomes PID 1
+# — which in this container is claude/opencode (entrypoint.sh execs them), and
+# they never reap orphaned children. A dnsmasq that dies therefore lingers as
+# a zombie that pgrep still lists, which would leave the watchdog below
+# believing it's alive forever.
+dnsmasq_running() { ps -C dnsmasq -o stat= 2>/dev/null | grep -qv '^Z'; }
+
 echo "Starting dnsmasq..."
 mkdir -p /run
 dnsmasq "${DNSMASQ_ARGS[@]}"
-if ! pgrep -x dnsmasq >/dev/null; then
+if ! dnsmasq_running; then
     echo "ERROR: dnsmasq failed to start"
     exit 1
 fi
@@ -202,7 +209,7 @@ echo "Starting dnsmasq watchdog..."
 (
     while true; do
         sleep 30
-        pgrep -x dnsmasq >/dev/null || dnsmasq "${DNSMASQ_ARGS[@]}" || true
+        dnsmasq_running || dnsmasq "${DNSMASQ_ARGS[@]}" || true
     done
 ) &
 disown

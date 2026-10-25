@@ -25,17 +25,11 @@ If you're unsure whether a domain is allowed, just try it rather than assuming.
 
 If a task needs a domain that isn't covered, don't try to work around the firewall silently — surface it to the user and pick one of these, depending on urgency:
 
-- **Right now, this session (temporary)**: **do not run this yourself.** Changing firewall state on a running system from inside the very container that firewall is meant to constrain is not a decision to make unilaterally — always tell the user what domain you need and why, and give them the command to run themselves. This holds *even if* the sandbox was launched with `--mount-docker-socket`, which mounts the Docker socket into the container and puts `appuser` in the `docker` group — making self-execution technically possible does not make it your call. Hand the user this command, filled in with the container ID from `hostname` and the real domain:
+- **Right now, this session (temporary)**: **do not run this yourself.** Changing firewall state on a running system from inside the very container that firewall is meant to constrain is not a decision to make unilaterally — always tell the user what domain you need and why, and give them the command to run themselves. This holds *even if* the sandbox was launched with `--mount-docker-socket`, which mounts the Docker socket into the container and puts `appuser` in the `docker` group — making self-execution technically possible does not make it your call. Hand the user this command to run on the host, filled in with this container's ID (the output of `hostname`) and the real domain(s):
   ```bash
-  CONTAINER_ID=$(hostname)
-  DOMAIN="new-domain.com"
-  docker exec --user root "$CONTAINER_ID" bash -c "
-    for ip in \$(dig +noall +answer A '$DOMAIN' | awk '\$4 == \"A\" {print \$5}'); do
-      ipset add allowed-domains \"\$ip\" -exist
-    done
-  "
+  docker exec --user root <container-id> allow-domain new-domain.com
   ```
-  This only lasts until the container restarts. The Docker socket is **not** mounted by default — check `docker ps` (or `ls /var/run/docker.sock`) before assuming it's there; if it's missing, tell the user this route needs the sandbox restarted with `--mount-docker-socket`.
+  `allow-domain` adds the domain's current IPs to the firewall and registers it with the container's dnsmasq resolver, so IPs it rotates to later (CDNs) keep working too. This only lasts until the container restarts. The Docker socket is **not** mounted by default — check `docker ps` (or `ls /var/run/docker.sock`) before assuming it's there; if it's missing, tell the user this route needs the sandbox restarted with `--mount-docker-socket`.
 - **Going forward (persistent)**: add the domain to `/workspace/allowed-domains`, one per line. This is the supported long-term fix and takes effect on the next container start — ask the user to confirm before you edit it, since it's a standing change to the project's network policy, not just this session.
 
 The container has asdf for version management. Install runtimes (node, python, etc.) with:

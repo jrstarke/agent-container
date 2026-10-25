@@ -7,6 +7,7 @@
 - **Dockerfile** – Docker build instructions for the sandbox image.
 - **entrypoint.sh** – Container entrypoint that prepares the environment before execution.
 - **statusline.sh** – Claude Code status line (model, context-window use, plan rate limits, session cost); installed as `/usr/local/bin/claude-statusline`.
+- **allow-domain.sh** – Installed as `/usr/local/bin/allow-domain`; run as root via `docker exec` to allow extra domains for the rest of a container's life (ipset + dnsmasq registration, so CDN IP rotation keeps working).
 - **opencode.json.container** – Configuration that is copied into the Opencode runtime. Ships with a placeholder TensorZero `baseURL`; set `TENSORZERO_BASE_URL` in the host environment before running `run.sh` to substitute the real gateway at container start (see `entrypoint.sh`).
 
 ## Development Context
@@ -24,6 +25,7 @@
 - **test_publish_port_check.sh** – Checks `run.sh` picks a free random port in 49152–65535 per run, publishes it on host loopback, and passes it in as `PUBLISH_PORT`.
 - **test_statusline_check.sh** – Renders sample status line payloads through `statusline.sh` and checks the Dockerfile installs it as the Claude Code `statusLine`.
 - **test_dnsmasq_ipset_sync.sh** – Static checks that `init-firewall.sh` runs dnsmasq (loopback-only, with a watchdog) to keep the `allowed-domains` ipset in sync as CDN IPs rotate.
+- **test_allow_domain.sh** – Runs `allow-domain.sh` against stub dig/ipset and a fake daemonizing dnsmasq; checks config update, IP seeding, restart with original args, input validation, and wiring.
 - **test/** – Container smoke tests (e.g. verifying the `claude` binary works).
 - **AGENTS.md** – This high-level description of the workspace layout.
 

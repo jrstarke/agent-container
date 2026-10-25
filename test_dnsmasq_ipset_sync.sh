@@ -23,7 +23,16 @@ check "launches dnsmasq against the generated conf file" '\-\-conf-file=/etc/dns
 check "dnsmasq is restricted to loopback (avoids clashing with Docker's embedded DNS)" '\-\-listen-address=127\.0\.0\.1'
 check "dnsmasq uses an explicit pid file (Debian's default dir is never created here)" '\-\-pid-file='
 check "points resolv.conf at dnsmasq" '127\.0\.0\.1'
-check "runs a watchdog that restarts dnsmasq if it dies" 'pgrep -x dnsmasq'
+check "runs a watchdog that restarts dnsmasq if it dies" 'dnsmasq_running \|\| dnsmasq'
+# PID 1 (claude/opencode) never reaps orphans, so a dead daemonized dnsmasq
+# lingers as a zombie that pgrep still lists; liveness must skip zombies.
+check "dnsmasq liveness ignores zombies" "ps -C dnsmasq -o stat= .*grep -qv '\^Z'"
+if grep -q 'pgrep -x dnsmasq' /workspace/init-firewall.sh; then
+  echo "FAIL: no zombie-blind pgrep liveness checks left"
+  fail=1
+else
+  echo "PASS: no zombie-blind pgrep liveness checks left"
+fi
 
 if ! grep -q "dnsmasq" /workspace/Dockerfile; then
   echo "FAIL: Dockerfile installs dnsmasq"
