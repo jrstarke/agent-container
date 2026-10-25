@@ -122,7 +122,9 @@ RUN echo '{"hasCompletedOnboarding": true, "projects": {"/workspace": {"hasTrust
 # writing straight to the seed copy first would just get overwritten by that
 # install with a copy that's missing our manual keys. The seed dir gets the
 # post-install merged version instead, see below.
-RUN echo '{"skipDangerousModePermissionPrompt": true, "theme": "light", "advisorModel": "opus"}' > /home/appuser/.claude/settings.json && \
+# statusLine points at claude-statusline (statusline.sh, COPYed below):
+# model, context-window use, plan rate limits and session cost.
+RUN echo '{"skipDangerousModePermissionPrompt": true, "theme": "light", "advisorModel": "opus", "statusLine": {"type": "command", "command": "/usr/local/bin/claude-statusline"}}' > /home/appuser/.claude/settings.json && \
   chown appuser:appuser /home/appuser/.claude/settings.json
 
 # Install the Superpowers plugin for Claude Code, mirroring the opencode.json
@@ -163,10 +165,11 @@ RUN mkdir -p /home/appuser/.config && chown appuser:appuser /home/appuser/.confi
 
 COPY init-firewall.sh /usr/local/bin/init-firewall.sh
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY statusline.sh /usr/local/bin/claude-statusline
 COPY AGENTS.md.container /home/appuser/.config/opencode/AGENTS.md
 COPY AGENTS.md.container /opt/sandbox-seed/CLAUDE.md
 COPY opencode.json.container /home/appuser/.config/opencode/opencode.json
-RUN chmod 755 /usr/local/bin/init-firewall.sh /usr/local/bin/entrypoint.sh
+RUN chmod 755 /usr/local/bin/init-firewall.sh /usr/local/bin/entrypoint.sh /usr/local/bin/claude-statusline
 RUN chown appuser:appuser /opt/sandbox-seed/CLAUDE.md
 
 RUN mkdir -p /workspace && chown -R appuser /workspace /commandhistory

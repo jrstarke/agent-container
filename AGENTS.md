@@ -6,6 +6,7 @@
 - **run.sh** – Helper script used to rebuild the container when changes are made.
 - **Dockerfile** – Docker build instructions for the sandbox image.
 - **entrypoint.sh** – Container entrypoint that prepares the environment before execution.
+- **statusline.sh** – Claude Code status line (model, context-window use, plan rate limits, session cost); installed as `/usr/local/bin/claude-statusline`.
 - **opencode.json.container** – Configuration that is copied into the Opencode runtime. Ships with a placeholder TensorZero `baseURL`; set `TENSORZERO_BASE_URL` in the host environment before running `run.sh` to substitute the real gateway at container start (see `entrypoint.sh`).
 
 ## Development Context
@@ -21,6 +22,7 @@
 - **test_agent_container_name_check.sh** – Static check that `run.sh` uses the `agent-container` image/volume names and migrates the old `opencode-sandbox-*` volumes.
 - **test_playwright_deps_check.sh** – Static check that the Dockerfile installs Playwright's pinned Chromium system deps after Node and cleans apt/npm caches.
 - **test_publish_port_check.sh** – Checks `run.sh` picks a free random port in 49152–65535 per run, publishes it on host loopback, and passes it in as `PUBLISH_PORT`.
+- **test_statusline_check.sh** – Renders sample status line payloads through `statusline.sh` and checks the Dockerfile installs it as the Claude Code `statusLine`.
 - **test/** – Container smoke tests (e.g. verifying the `claude` binary works).
 - **AGENTS.md** – This high-level description of the workspace layout.
 

@@ -18,6 +18,12 @@ set -- "${ARGS[@]}"
 GIT_USER_NAME=$(git config --global user.name 2>/dev/null || echo "")
 GIT_USER_EMAIL=$(git config --global user.email 2>/dev/null || echo "")
 
+# The container would otherwise run on UTC, so the status line's rate-limit
+# reset time (and every other timestamp) would be off from the host clock.
+# Pass the host's zone name: $TZ if set, else read it from the /etc/localtime
+# symlink (…/zoneinfo/America/Edmonton on both macOS and Linux).
+HOST_TZ="${TZ:-$(readlink /etc/localtime 2>/dev/null | sed -n 's|.*/zoneinfo/||p')}"
+
 echo "=== Building agent container ==="
 docker build -t agent-container "$SCRIPT_DIR"
 
@@ -98,6 +104,7 @@ docker run -it --rm \
   -e GIT_USER_EMAIL="$GIT_USER_EMAIL" \
   -e TENSORZERO_BASE_URL="${TENSORZERO_BASE_URL:-}" \
   -e PUBLISH_PORT="$PUBLISH_PORT" \
+  ${HOST_TZ:+-e TZ="$HOST_TZ"} \
   -w /workspace \
   agent-container \
   "$@"
