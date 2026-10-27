@@ -29,7 +29,7 @@ If a task needs a domain that isn't covered, don't try to work around the firewa
   ```bash
   docker exec --user root <container-id> allow-domain new-domain.com
   ```
-  `allow-domain` adds the domain's current IPs to the firewall and registers it with the container's dnsmasq resolver, so IPs it rotates to later (CDNs) keep working too. This only lasts until the container restarts. The Docker socket is **not** mounted by default — check `docker ps` (or `ls /var/run/docker.sock`) before assuming it's there; if it's missing, tell the user this route needs the sandbox restarted with `--mount-docker-socket`.
+  `allow-domain` adds the domain's current IPs to the firewall and registers it with the container's dnsmasq resolver, so IPs it rotates to later (CDNs) keep working too. A domain also covers its subdomains (`example.com` includes `www.example.com`), so there's no need to list them separately. This only lasts until the container restarts. The Docker socket is **not** mounted by default — check `docker ps` (or `ls /var/run/docker.sock`) before assuming it's there; if it's missing, tell the user this route needs the sandbox restarted with `--mount-docker-socket`.
 - **Going forward (persistent)**: add the domain to `/workspace/allowed-domains`, one per line. This is the supported long-term fix and takes effect on the next container start — ask the user to confirm before you edit it, since it's a standing change to the project's network policy, not just this session.
 
 The container has asdf for version management. Install runtimes (node, python, etc.) with:
