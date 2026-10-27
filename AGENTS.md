@@ -26,6 +26,7 @@
 - **test_statusline_check.sh** – Renders sample status line payloads through `statusline.sh` and checks the Dockerfile installs it as the Claude Code `statusLine`.
 - **test_dnsmasq_ipset_sync.sh** – Static checks that `init-firewall.sh` runs dnsmasq (loopback-only, with a watchdog) to keep the `allowed-domains` ipset in sync as CDN IPs rotate.
 - **test_allow_domain.sh** – Runs `allow-domain.sh` against stub dig/ipset and a fake daemonizing dnsmasq; checks config update, IP seeding, restart with original args, input validation, and wiring.
+- **test_pr_image_push_check.sh** – Static check that `docker.yml` publishes `sha-<head>` images for same-repo pull requests (built from the PR head) but keeps fork PRs build-only.
 - **test/** – Container smoke tests (e.g. verifying the `claude` binary works).
 - **AGENTS.md** – This high-level description of the workspace layout.
 

@@ -17,6 +17,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Build the PR head itself (not the merge into main) so the
+          # sha-<head> tag matches the image contents.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -34,6 +38,10 @@ jobs:
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
+        env:
+          # On pull_request, tag sha-<PR head commit> rather than the synthetic
+          # merge commit, so a branch push yields a pullable sha-<commit> image.
+          DOCKER_METADATA_PR_HEAD_SHA: true
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
@@ -46,7 +54,9 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          # Push for same-repo PRs too (images to test before merging); fork PRs
+          # get a read-only token, so they stay build-only.
+          push: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
