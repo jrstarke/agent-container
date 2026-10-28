@@ -6,7 +6,7 @@ ARG OPENCODE_VERSION=1.17.13
 ARG ASDF_VERSION=0.19.0
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  ca-certificates curl git iptables ipset dnsutils dnsmasq coreutils procps jq bash gosu docker-cli iproute2 libatomic1 openssh-client gh \
+  ca-certificates curl git iptables ipset dnsutils dnsmasq coreutils procps jq bash gosu docker-cli iproute2 libatomic1 openssh-client gh zsh \
   && update-ca-certificates \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -38,7 +38,7 @@ RUN ARCH=$(echo "$TARGETARCH" | sed 's/amd64/x64/;s/arm64/arm64/') && \
 # Install qemu for non-native binaries
 RUN apt-get update && apt-get install -y --no-install-recommends qemu-user-static && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /home/appuser && useradd -m -s /bin/bash appuser || true
+RUN mkdir -p /home/appuser && useradd -m -s /usr/bin/zsh appuser || true
 RUN chown -R appuser:appuser /home/appuser
 RUN groupadd -g 991 docker || true
 RUN usermod -aG docker appuser || true
@@ -170,6 +170,8 @@ COPY allow-domain.sh /usr/local/bin/allow-domain
 COPY AGENTS.md.container /home/appuser/.config/opencode/AGENTS.md
 COPY AGENTS.md.container /opt/sandbox-seed/CLAUDE.md
 COPY opencode.json.container /home/appuser/.config/opencode/opencode.json
+RUN mkdir -p /opt/agent-container
+COPY container-contract.json /opt/agent-container/container-contract.json
 RUN chmod 755 /usr/local/bin/init-firewall.sh /usr/local/bin/entrypoint.sh /usr/local/bin/claude-statusline /usr/local/bin/allow-domain
 RUN chown appuser:appuser /opt/sandbox-seed/CLAUDE.md
 
