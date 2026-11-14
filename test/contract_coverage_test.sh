@@ -26,4 +26,12 @@ for cap in $(jq -r '.capabilities.required[]' container-contract.json); do
   fi
 done
 
+workdir=$(jq -r '.workingDir.path' container-contract.json)
+if grep -qF -- "-w $workdir" run.sh; then
+  echo "PASS: run.sh sets working directory $workdir"
+else
+  echo "FAIL: run.sh doesn't set working directory $workdir"
+  fail=1
+fi
+
 exit $fail

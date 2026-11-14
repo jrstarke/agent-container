@@ -21,6 +21,10 @@
       { "path": "/var/run/docker.sock", "readOnly": false, "purpose": "grants Docker access inside the container (run.sh's --mount-docker-socket); not required for normal operation and widens the container's effective privileges to node/host-root-equivalent -- grant deliberately, never by default" }
     ]
   },
+  "workingDir": {
+    "path": "/workspace",
+    "purpose": "the image sets no WORKDIR, so a launcher must set the working directory itself (run.sh: -w /workspace; Kubernetes: the container's workingDir, which exec'd processes inherit) or agent tools start in /"
+  },
   "capabilities": {
     "required": ["NET_ADMIN", "NET_RAW"],
     "purpose": "init-firewall.sh (run at container start unless SKIP_FIREWALL=true) configures iptables/ipset egress rules; without these capabilities it fails to apply them"
