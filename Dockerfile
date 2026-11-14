@@ -6,7 +6,7 @@ ARG OPENCODE_VERSION=1.17.13
 ARG ASDF_VERSION=0.19.0
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  ca-certificates curl git iptables ipset dnsutils dnsmasq coreutils procps jq bash gosu docker-cli iproute2 libatomic1 openssh-client gh zsh \
+  ca-certificates curl git iptables ipset dnsutils dnsmasq coreutils procps jq bash gosu docker-cli iproute2 libatomic1 openssh-client gh zsh dtach \
   && update-ca-certificates \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -167,6 +167,7 @@ COPY init-firewall.sh /usr/local/bin/init-firewall.sh
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY statusline.sh /usr/local/bin/claude-statusline
 COPY allow-domain.sh /usr/local/bin/allow-domain
+COPY --chown=appuser:appuser zshrc.container /home/appuser/.zshrc
 COPY AGENTS.md.container /home/appuser/.config/opencode/AGENTS.md
 COPY AGENTS.md.container /opt/sandbox-seed/CLAUDE.md
 COPY opencode.json.container /home/appuser/.config/opencode/opencode.json
