@@ -5,6 +5,7 @@
     "optional": [
       { "name": "GIT_USER_NAME", "purpose": "git config --global user.name, set by entrypoint.sh if present" },
       { "name": "GIT_USER_EMAIL", "purpose": "git config --global user.email, set by entrypoint.sh if present" },
+      { "name": "GH_TOKEN", "purpose": "GitHub token; if present, entrypoint.sh wires it into git via gh's credential helper and rewrites git@/ssh:// github.com remotes to HTTPS, so clone/push work where only 443 egress is allowed. gh also reads it directly" },
       { "name": "TENSORZERO_BASE_URL", "purpose": "substituted into ~/.config/opencode/opencode.json's baseURL by entrypoint.sh if present" },
       { "name": "SKIP_FIREWALL", "purpose": "set to 'true' to skip init-firewall.sh at container start, e.g. when the launcher already enforces egress policy itself (a Kubernetes NetworkPolicy)" },
       { "name": "HOST_WORKSPACE", "purpose": "informational, defaults to /workspace via the image's own ENV; override only if the launcher mounts /workspace from a host-relative path tools should report" }
