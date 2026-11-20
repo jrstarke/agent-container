@@ -7,7 +7,8 @@ set -euo pipefail
 # init-firewall.sh's setup still ran (idle must not skip it), (3) a command
 # can be exec'd into the already-running container afterward.
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
-docker build -t agent-container-test --build-arg TARGETARCH=arm64 . > /dev/null
+source test/lib_arch.sh
+docker build -t agent-container-test --build-arg TARGETARCH="$TARGETARCH" . > /dev/null
 
 cid=$(docker run -d --rm --cap-add=NET_ADMIN --cap-add=NET_RAW agent-container-test idle)
 cleanup() { docker stop "$cid" > /dev/null 2>&1 || true; }

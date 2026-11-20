@@ -7,7 +7,8 @@ set -euo pipefail
 # github.com URLs resolve to https://, (3) other hosts are left alone,
 # (4) without GH_TOKEN none of this is configured.
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
-docker build -t agent-container-test --build-arg TARGETARCH=arm64 . > /dev/null
+source test/lib_arch.sh
+docker build -t agent-container-test --build-arg TARGETARCH="$TARGETARCH" . > /dev/null
 
 cid=$(docker run -d --rm --cap-add=NET_ADMIN --cap-add=NET_RAW -e GH_TOKEN=test-token-123 agent-container-test idle)
 plain=$(docker run -d --rm --cap-add=NET_ADMIN --cap-add=NET_RAW agent-container-test idle)
