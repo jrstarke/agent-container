@@ -12,6 +12,24 @@ permissions:
   packages: write
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Native-arch builds only (no QEMU): each test builds the image itself
+      # and layer caching on the runner makes the repeats cheap.
+      - name: Run tests
+        run: |
+          status=0
+          for t in test/*_test.sh; do
+            echo "::group::$t"
+            bash "$t" || { echo "::error::$t failed"; status=1; }
+            echo "::endgroup::"
+          done
+          exit $status
+
   build-and-push:
     runs-on: ubuntu-latest
     steps:
