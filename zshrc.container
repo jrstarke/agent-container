@@ -1,0 +1,31 @@
+# appuser's ~/.zshrc. Kept minimal on purpose; its existence alone also stops
+# zsh's first-run "new user" configuration menu, which would otherwise greet
+# every interactive shell (run.sh, collie session Pods, collie's herdr panes).
+
+# History. run.sh mounts a persistent volume at /commandhistory; elsewhere
+# (k8s Pods) it's just image filesystem, or absent -- fall back to $HOME.
+if [[ -d /commandhistory && -w /commandhistory ]]; then
+  HISTFILE=/commandhistory/.zsh_history
+else
+  HISTFILE=~/.zsh_history
+fi
+HISTSIZE=10000
+SAVEHIST=10000
+setopt inc_append_history share_history hist_ignore_dups hist_ignore_space
+
+# Emacs-style line editing (Ctrl-A/E/R...), with up/down searching history
+# for lines starting with what's already typed -- so up-arrow, Enter re-runs
+# the last command, e.g. `session-pod-launcher run ...` after a session Pod
+# was recreated.
+bindkey -e
+autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
+zle -N up-line-or-beginning-search
+zle -N down-line-or-beginning-search
+for key in '^[[A' '^[OA'; do bindkey "$key" up-line-or-beginning-search; done
+for key in '^[[B' '^[OB'; do bindkey "$key" down-line-or-beginning-search; done
+
+# Completion. -i: silently skip "insecure" completion dirs instead of
+# prompting about them.
+autoload -Uz compinit && compinit -i
+
+PROMPT='%n@%m:%~ %# '

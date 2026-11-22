@@ -155,8 +155,9 @@ iptables -A OUTPUT -d "$HOST_NETWORK" -j ACCEPT
 # can resolve to an address outside the container's own default-route subnet
 # above -- e.g. when Docker routes host access through a VM layer, as Docker
 # Desktop does on Mac/Windows. Allow it explicitly via /etc/hosts rather than
-# assuming HOST_NETWORK already covers it.
-HOST_DOCKER_INTERNAL_IP=$(getent hosts host.docker.internal 2>/dev/null | awk '{print $1}' | head -1)
+# assuming HOST_NETWORK already covers it. Optional: it's absent without
+# --add-host (and in k8s Pods), and getent's exit 2 would trip pipefail.
+HOST_DOCKER_INTERNAL_IP=$(getent hosts host.docker.internal 2>/dev/null | awk '{print $1}' | head -1 || true)
 if [ -n "$HOST_DOCKER_INTERNAL_IP" ]; then
     echo "Adding host.docker.internal ($HOST_DOCKER_INTERNAL_IP) to allowed domains..."
     ipset add allowed-domains "$HOST_DOCKER_INTERNAL_IP" -exist

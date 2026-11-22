@@ -7,7 +7,8 @@ set -euo pipefail
 # new ones (e.g. `gh auth login` failing with
 # "mkdir /home/appuser/.config/gh: permission denied").
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
-docker build -t agent-container-test --build-arg TARGETARCH=arm64 . > /dev/null
+source test/lib_arch.sh
+docker build -t agent-container-test --build-arg TARGETARCH="$TARGETARCH" . > /dev/null
 # --entrypoint overrides the image's entrypoint.sh, which otherwise treats
 # any unrecognized argv as arguments to `opencode` itself (its case
 # statement's default branch), not as a shell command to run.

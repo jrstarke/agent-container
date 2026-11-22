@@ -27,6 +27,18 @@ if [ -n "$GIT_USER_NAME" ] || [ -n "$GIT_USER_EMAIL" ]; then
   gosu appuser git config --global user.email "$GIT_USER_EMAIL"
 fi
 
+# GitHub over HTTPS with a token, for launchers whose egress policy allows
+# only 443 (collie's session Pods): gh's credential helper hands git
+# $GH_TOKEN at use time (gh itself reads it too, for PRs), and SSH-style
+# github.com remotes are rewritten to HTTPS so they go through it as well.
+# The rewrite is on the URL used, not the stored remote, so clones keep
+# their git@ URLs.
+if [ -n "${GH_TOKEN:-}" ]; then
+  gosu appuser gh auth setup-git --hostname github.com
+  gosu appuser git config --global --replace-all url."https://github.com/".insteadOf "git@github.com:"
+  gosu appuser git config --global --add url."https://github.com/".insteadOf "ssh://git@github.com/"
+fi
+
 # opencode.json.container ships with a placeholder TensorZero baseURL
 # (tensorzero.example.com) since the real gateway is host/user-specific and
 # shouldn't be baked into the image or committed. Substitute in the real
@@ -72,8 +84,16 @@ case "$1" in
     shift
     exec gosu appuser claude --dangerously-skip-permissions "$@"
     ;;
+  idle)
+    # Runs firewall init and every other setup step above, then parks
+    # instead of starting an agent — for launchers (e.g. collie's
+    # session-pod-launcher) that create a container ahead of time and start
+    # the actual agent command later via a separate exec into the already-
+    # running container, rather than at container-start time.
+    exec sleep infinity
+    ;;
   *)
-    # Default to opencode when no known tool is specified
-    exec gosu appuser opencode "$@"
+    # Default to claude when no known tool is specified
+    exec gosu appuser claude --dangerously-skip-permissions "$@"
     ;;
 esac
